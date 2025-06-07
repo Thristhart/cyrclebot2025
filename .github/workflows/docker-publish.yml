@@ -85,7 +85,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           source: "${{ github.workspace }}/prod.env"
           target: "/srv/containers/cyrclebot/"
-          strip_components: 2
+          strip_components: 4
           overwrite: true
 
       - name: Copy systemd container to prod
