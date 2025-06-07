@@ -1,0 +1,11 @@
+[Unit]
+Description=Cyrclebot
+
+[Container]
+Image=ghcr.io/thristhart/cyrclebot:latest
+Mount=type=bind,source=/srv/containers/cyrclebot/data/,target=/mnt/data
+EnvironmentFile=/srv/containers/cyrclebot/prod.env
+PublishPort=127.0.0.1:4000:3000
+
+[Install]
+WantedBy=default.target
