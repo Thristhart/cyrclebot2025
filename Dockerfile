@@ -9,6 +9,6 @@ RUN npm ci --workspaces
 
 WORKDIR /srv/cyrclebot/
 USER app
-CMD npm start
+CMD npx pm2 start ecosystem.config.js
 
 EXPOSE 3000
