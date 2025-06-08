@@ -5,10 +5,10 @@ RUN addgroup -S app --gid=1234 && adduser -S app -G app --uid 1234
 
 COPY . /srv/cyrclebot
 WORKDIR /srv/cyrclebot
-RUN npm ci --workspaces
+RUN npm ci
 
 WORKDIR /srv/cyrclebot/
 USER app
-CMD npx pm2 start ecosystem.config.js
+CMD npm start
 
 EXPOSE 3000
