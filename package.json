@@ -3,7 +3,7 @@
         "packages/*"
     ],
     "scripts": {
-        "migrate": "dbmate up",
+        "migrate": "dbmate --migrations-dir ./packages/data/db/migrations up",
         "start": "pm2-runtime ecosystem.config.js"
     },
     "dependencies": {
