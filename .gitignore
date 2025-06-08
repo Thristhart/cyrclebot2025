@@ -1,4 +1,9 @@
 node_modules
 .output
 .vinxi
+dist
 prod.env
+.env
+dev.sqlite3
+dev.sqlite3-shm
+dev.sqlite3-wal

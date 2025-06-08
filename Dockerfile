@@ -7,7 +7,7 @@ COPY . /srv/cyrclebot
 WORKDIR /srv/cyrclebot
 RUN npm ci --workspaces
 
-WORKDIR /srv/cyrclebot/packages/web
+WORKDIR /srv/cyrclebot/
 USER app
 CMD npm start
 
