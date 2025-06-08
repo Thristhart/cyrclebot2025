@@ -9,6 +9,6 @@ RUN npm ci
 
 WORKDIR /srv/cyrclebot/
 USER app
-CMD npm start
+CMD npm run migrate; npm start
 
 EXPOSE 3000
