@@ -1,25 +1,15 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
 import { useAppSession } from "../session.server";
 
-export const Route = createFileRoute("/oauth")({
-  validateSearch(search) {
-    return {
-      code: search.code as string | undefined,
-      state: search.state as string | undefined,
-    };
-  },
-  loaderDeps(opts) {
-    return {
-      code: opts.search.code,
-      state: opts.search.state,
-    };
-  },
-  async loader(ctx) {
-    if (!(ctx.deps.code && ctx.deps.state)) {
+const oauthFn = createServerFn({ method: "GET" })
+  .validator((d: { code: string | undefined; state: string | undefined }) => d)
+  .handler(async (ctx) => {
+    if (!(ctx.data.code && ctx.data.state)) {
       throw "Missing required oauth query params";
     }
     const session = await useAppSession();
-    if (ctx.deps.state !== session.id) {
+    if (ctx.data.state !== session.id) {
       throw "Bad state";
     }
     const response = await fetch("https://discord.com/api/oauth2/token", {
@@ -31,7 +21,7 @@ export const Route = createFileRoute("/oauth")({
         grant_type: "authorization_code",
         client_id: process.env.DISCORD_CLIENT_ID!,
         client_secret: process.env.DISCORD_OAUTH_SECRET!,
-        code: ctx.deps.code,
+        code: ctx.data.code,
         redirect_uri: `${process.env.BASE_URL}/oauth`,
       }).toString(),
     });
@@ -47,6 +37,23 @@ export const Route = createFileRoute("/oauth")({
         refresh_token: token_response.refresh_token,
       },
     });
+  });
+
+export const Route = createFileRoute("/oauth")({
+  validateSearch(search) {
+    return {
+      code: search.code as string | undefined,
+      state: search.state as string | undefined,
+    };
+  },
+  loaderDeps(opts) {
+    return {
+      code: opts.search.code,
+      state: opts.search.state,
+    };
+  },
+  async loader(ctx) {
+    await oauthFn({ data: ctx.deps });
     throw redirect({
       to: "/",
     });
