@@ -1,5 +1,10 @@
 import { database } from "./database";
-import { WriteUserDBO } from "./model";
+import { UserDBO, WriteUserDBO } from "./model";
+
+export function getAllUsers() {
+  const statement = database.prepare("SELECT * FROM users");
+  return statement.all() as Array<UserDBO>;
+}
 
 export function doesUserWithDiscordIDExist(discord_id: string) {
   const statement = database
