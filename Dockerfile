@@ -1,6 +1,9 @@
 FROM node:24-alpine
 LABEL org.opencontainers.image.source=https://github.com/thristhart/cyrclebot2025
 
+# node-gyp dependencies
+RUN apk add g++ make python
+
 RUN addgroup -S app --gid=1234 && adduser -S app -G app --uid 1234
 
 COPY . /srv/cyrclebot
