@@ -1,4 +1,4 @@
-FROM node:24-alpine
+FROM node:24-slim
 LABEL org.opencontainers.image.source=https://github.com/thristhart/cyrclebot2025
 
 # node-gyp dependencies
