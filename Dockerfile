@@ -9,6 +9,7 @@ RUN addgroup --system app --gid 1234 && adduser --system app --gid 1234 --uid 12
 COPY . /srv/cyrclebot
 WORKDIR /srv/cyrclebot
 RUN npm ci
+RUN npm run build --workspaces --if-present
 
 WORKDIR /srv/cyrclebot/
 USER app
