@@ -4,7 +4,7 @@ LABEL org.opencontainers.image.source=https://github.com/thristhart/cyrclebot202
 # for node-gyp
 RUN apt-get update && apt-get install -y python3 g++ make
 
-RUN addgroup --system app --gid 1234 && adduser --system app --gid 1234 --uid 1234 -m
+RUN addgroup --system app --gid 1234 && adduser --system app --gid 1234 --uid 1234 --home /home/app
 
 COPY . /srv/cyrclebot
 WORKDIR /srv/cyrclebot
