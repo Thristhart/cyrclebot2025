@@ -11,14 +11,14 @@ await esbuild.build({
   outdir: "./dist",
   banner: {
     js: `
-import { createRequire as topLevelCreateRequire } from 'module';
+import { createRequire as topLevelCreateRequireCyrclebot } from 'module';
 import { fileURLToPath as topLevelFileUrlToPath } from "node:url";
-const require = topLevelCreateRequire( import.meta.url );
+const require = topLevelCreateRequireCyrclebot( import.meta.url );
 const __dirname = topLevelFileUrlToPath( new URL( ".", import.meta.url ) );
 const __filename = topLevelFileUrlToPath( import.meta.url );
         `,
   },
-  external: ["dbmate", "better-sqlite3"],
+  external: ["dbmate", "better-sqlite3", 'ffmpeg-static'],
 });
 
 console.log("discord bot built.");
