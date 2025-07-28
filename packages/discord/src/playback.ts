@@ -75,6 +75,7 @@ async function getYtdlpStream(mediaObject: MediaObjectDBO) {
     const rightStream = Stream.Readable.fromWeb(right as ReadableStream<any>);
     return rightStream;
   }
+  console.error("Didn't get a URL in ytldp results:", results);
   return undefined;
 }
 
