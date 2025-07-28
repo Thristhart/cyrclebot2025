@@ -380,8 +380,9 @@ export function ytdlp(url: string, args: YtDlpFlags) {
 
   return new Promise((resolve, reject) => {
     const child = child_process.spawn(ytdlpBinaryPath, [
+      `--cookies`,
+      cookiesPath,
       url,
-      `--cookies ${cookiesPath}`,
       ...commandArgs,
     ]);
     let buffer = "";
@@ -394,13 +395,16 @@ export function ytdlp(url: string, args: YtDlpFlags) {
     });
     child.on("error", reject);
     child.on("close", () => {
+      if (errBuffer) {
+        console.error("ytdlp err", errBuffer);
+      }
+      if (!buffer) {
+        resolve(null);
+      }
       try {
         resolve(JSON.parse(buffer));
       } catch (e) {
         console.error("ytdlp invalid JSON:", buffer);
-      }
-      if (errBuffer) {
-        console.error("ytdlp err", errBuffer);
       }
     });
   });
