@@ -75,6 +75,12 @@ jobs:
         env:
           SOPS_AGE_KEY: ${{ secrets.SOPS_DECRYPT_KEY }}
 
+      - name: Decrypt encrypted_cookies.txt
+        run: sops decrypt encrypted_cookies.txt --output cookies.txt
+        working-directory: ${{ github.workspace }}
+        env:
+          SOPS_AGE_KEY: ${{ secrets.SOPS_DECRYPT_KEY }}
+
       - name: Copy prod.env to prod
         uses: appleboy/scp-action@master
         with:

@@ -373,12 +373,17 @@ export interface YtDlpOptions {
 
 const ytdlpBinaryName = os.platform() === "win32" ? "yt-dlp.exe" : "yt-dlp";
 const ytdlpBinaryPath = path.resolve(__dirname, "..", "bin", ytdlpBinaryName);
+const cookiesPath = path.resolve(__dirname, "..", "..", "..", "cookies.txt");
 
 export function ytdlp(url: string, args: YtDlpFlags) {
   const commandArgs = dargs(args, { useEquals: false });
 
   return new Promise((resolve, reject) => {
-    const child = child_process.spawn(ytdlpBinaryPath, [url, ...commandArgs]);
+    const child = child_process.spawn(ytdlpBinaryPath, [
+      url,
+      `--cookies ${cookiesPath}`,
+      ...commandArgs,
+    ]);
     let buffer = "";
     child.stdout.on("data", (data) => {
       buffer += data.toString();
