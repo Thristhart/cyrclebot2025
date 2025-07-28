@@ -373,7 +373,9 @@ export interface YtDlpOptions {
 
 const ytdlpBinaryName = os.platform() === "win32" ? "yt-dlp.exe" : "yt-dlp";
 const ytdlpBinaryPath = path.resolve(__dirname, "..", "bin", ytdlpBinaryName);
-const cookiesPath = path.resolve(__dirname, "..", "..", "..", "cookies.txt");
+const cookiesPath =
+  process.env.COOKIES_PATH ??
+  path.resolve(__dirname, "..", "..", "..", "cookies.txt");
 
 export function ytdlp(url: string, args: YtDlpFlags) {
   const commandArgs = dargs(args, { useEquals: false });

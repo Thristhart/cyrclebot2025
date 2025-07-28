@@ -92,6 +92,17 @@ jobs:
           strip_components: 5
           overwrite: true
 
+      - name: Copy cookies.txt to prod
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "${{ github.workspace }}/cookies.txt"
+          target: "/srv/containers/cyrclebot/data"
+          strip_components: 5
+          overwrite: true
+
       - name: Copy systemd container to prod
         uses: appleboy/scp-action@master
         with:
