@@ -111,7 +111,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             sudo chgrp 1234 /srv/containers/cyrclebot/data/cookies.txt
-            sudo chmod 640 /srv/containers/cyrclebot/data/cookies.txt
+            sudo chmod 660 /srv/containers/cyrclebot/data/cookies.txt
 
       - name: Copy systemd container to prod
         uses: appleboy/scp-action@master
