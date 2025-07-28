@@ -394,7 +394,11 @@ export function ytdlp(url: string, args: YtDlpFlags) {
     });
     child.on("error", reject);
     child.on("close", () => {
-      resolve(JSON.parse(buffer));
+      try {
+        resolve(JSON.parse(buffer));
+      } catch (e) {
+        console.error("ytdlp invalid JSON:", buffer);
+      }
       if (errBuffer) {
         console.error("ytdlp err", errBuffer);
       }
