@@ -12,6 +12,7 @@ RUN npm ci
 RUN npm run build --workspaces --if-present
 
 RUN wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /srv/cyrclebot/packages/discord/bin/yt-dlp
+RUN chmod +x /srv/cyrclebot/packages/discord/bin/yt-dlp
 
 WORKDIR /srv/cyrclebot/
 USER app
