@@ -103,6 +103,16 @@ jobs:
           strip_components: 5
           overwrite: true
 
+      - name: Make cookies.txt readable by docker user/group 1234
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            sudo chgrp 1234 /srv/containers/cyrclebot/data/cookies.txt
+            sudo chmod 640 /srv/containers/cyrclebot/data/cookies.txt
+
       - name: Copy systemd container to prod
         uses: appleboy/scp-action@master
         with:

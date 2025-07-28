@@ -61,8 +61,8 @@ async function getYtdlpStream(mediaObject: MediaObjectDBO) {
     // HACKHACK: i honestly have no idea why this is necessary
     // something about piping to a createWriteStream stream does _something_ to the stream that makes it stay alive properly
     // if i don't do this, the stream terminates near the end
-    await mkdir("./tmp", { recursive: true });
-    const stupidTempPath = "./tmp/" + crypto.randomUUID();
+    await mkdir(process.env.TEMP_LOCATION ?? "./tmp", { recursive: true });
+    const stupidTempPath = `${process.env.TEMP_LOCATION ?? "./tmp/"}${crypto.randomUUID()}`;
     const writeStream = createWriteStream(stupidTempPath, {
       emitClose: false,
     });
