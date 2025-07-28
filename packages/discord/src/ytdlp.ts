@@ -383,9 +383,16 @@ export function ytdlp(url: string, args: YtDlpFlags) {
     child.stdout.on("data", (data) => {
       buffer += data.toString();
     });
+    let errBuffer = "";
+    child.stderr.on("data", (data) => {
+      errBuffer += data.toString();
+    });
     child.on("error", reject);
     child.on("close", () => {
       resolve(JSON.parse(buffer));
+      if (errBuffer) {
+        console.error("ytdlp err", errBuffer);
+      }
     });
   });
 }
