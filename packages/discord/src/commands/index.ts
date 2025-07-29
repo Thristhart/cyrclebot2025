@@ -9,6 +9,7 @@ import {
   SlashCommandOptionsOnlyBuilder,
 } from "discord.js";
 import { clearCommand } from "./clear";
+import { glorpCommand } from "./glorp";
 import { skipCommand } from "./skip";
 
 export interface Command {
@@ -26,6 +27,7 @@ export function setupCommands(client: Client) {
   registerCommand(playCommand);
   registerCommand(skipCommand);
   registerCommand(clearCommand);
+  registerCommand(glorpCommand);
 
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) {
@@ -44,10 +46,7 @@ export function setupCommands(client: Client) {
       console.error(
         `No command matching ${interaction.commandName} was found.`
       );
-      await interaction.reply({
-        content: `No command matching ${interaction.commandName} was found.`,
-        flags: MessageFlags.Ephemeral,
-      });
+      // possible we're in prod and the dev version registered a new command, so don't answer
       return;
     }
     try {
