@@ -51,7 +51,7 @@ async function getYtdlpStream(mediaObject: MediaObjectDBO) {
     results.url &&
     typeof results.url === "string"
   ) {
-    console.log("Got yt-dlp info for", mediaObject.url);
+    console.log("Got yt-dlp info for", mediaObject.url, "url:", results.url);
     const response = await fetch(results.url, {
       method: "GET",
       headers: { "User-Agent": "cyrclebot" },

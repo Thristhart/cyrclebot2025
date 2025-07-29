@@ -15,7 +15,7 @@ export async function updateCommandRegistrations(guilds: string[]) {
     );
 
     await rest.put(Routes.applicationCommands(process.env.DISCORD_CLIENT_ID!), {
-      body: [],
+      body,
     });
 
     await Promise.all(
@@ -26,7 +26,7 @@ export async function updateCommandRegistrations(guilds: string[]) {
             process.env.DISCORD_CLIENT_ID!,
             guildId
           ),
-          { body }
+          { body: [] }
         );
       })
     );
