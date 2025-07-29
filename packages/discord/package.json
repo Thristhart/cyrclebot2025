@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "start": "node --enable-source-maps dist/bot.js"
+    "start": "node dist/bot.js"
   },
   "dependencies": {
     "@cyrclebot/data": "file:../data",

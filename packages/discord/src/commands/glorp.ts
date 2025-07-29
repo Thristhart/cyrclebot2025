@@ -97,6 +97,7 @@ export const glorpCommand = {
       server_id: interaction.guildId,
       channel_id: channel.id,
       url: `file://${process.env.BANDLE_DATA_LOCATION}${song.folder}/5.mp3`,
+      title: "bandle",
     });
     checkPlaybackStatus();
     interaction.reply(

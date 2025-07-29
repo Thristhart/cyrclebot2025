@@ -18,6 +18,7 @@ import {
   VoiceConnection,
   VoiceConnectionStatus,
 } from "@discordjs/voice";
+import { ActivityType, PresenceData } from "discord.js";
 import assert from "node:assert";
 import { createReadStream, createWriteStream } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
@@ -26,6 +27,7 @@ import { Stream } from "node:stream";
 import { ReadableStream } from "node:stream/web";
 import { MediaObjectDBO } from "../../data/model";
 import { client } from "./bot";
+import { hour, minute, second } from "./time";
 import { ytdlp } from "./ytdlp";
 
 async function probeAndCreateResource(readableStream: Stream.Readable) {
@@ -120,6 +122,9 @@ interface CustomResourceProps {
 
 export async function checkPlaybackStatus() {
   const guilds = await client.guilds.fetch();
+
+  let presence: PresenceData | undefined = undefined;
+
   for (const [, guildInfo] of guilds) {
     const queue = getQueueForServer(guildInfo.id);
     const guild = await client.guilds.fetch(guildInfo.id);
@@ -132,6 +137,7 @@ export async function checkPlaybackStatus() {
           "nothing in the queue and we're in a channel, so d/cing"
         );
         existingVoiceConnection.disconnect();
+        client.user.setPresence({});
       }
       continue;
     }
@@ -142,7 +148,6 @@ export async function checkPlaybackStatus() {
     if (!currentMediaObject.channel_id) {
       continue;
     }
-    console.log(`[${guildInfo.id}]`, "currentMediaObject", currentMediaObject);
     const voiceConnection = joinVoiceChannel({
       channelId: currentMediaObject.channel_id,
       guildId: guild.id,
@@ -212,6 +217,7 @@ export async function checkPlaybackStatus() {
             player.state.resource.playbackDuration;
 
           updateObjectPlaybackPosition(customProps.mediaObjectId, currentPos);
+          checkPlaybackStatus();
         }
       }, 300);
     }
@@ -235,7 +241,63 @@ export async function checkPlaybackStatus() {
         );
       }
     }
+
+    let progressBar = "";
+    if (
+      currentMediaObject.playback_position_ms !== null &&
+      currentMediaObject.duration_ms !== null
+    ) {
+      progressBar += "|";
+      const indicatorIndex = Math.floor(
+        10 *
+          (currentMediaObject.playback_position_ms /
+            currentMediaObject.duration_ms)
+      );
+      for (let i = 0; i < 10; i++) {
+        progressBar += i === indicatorIndex ? "o" : "-";
+      }
+      progressBar += "| ";
+      progressBar += `(${formatMilliseconds(currentMediaObject.playback_position_ms)}/${formatMilliseconds(currentMediaObject.duration_ms)})`;
+    }
+
+    presence = {
+      activities: [
+        {
+          name: currentMediaObject.title ?? "something",
+          type: ActivityType.Listening,
+          state: progressBar ? progressBar : undefined,
+          url: currentMediaObject.url,
+        },
+      ],
+    };
   }
+  if (presence) {
+    client.user.setPresence(presence);
+  } else {
+    client.user.setPresence({});
+  }
+}
+
+const formatter = new Intl.DurationFormat("en", {
+  style: "digital",
+  hoursDisplay: "auto",
+});
+function formatMilliseconds(milliseconds: number) {
+  const duration: Intl.DurationInput = {};
+  while (milliseconds >= hour) {
+    milliseconds -= hour;
+    duration.hours = (duration.hours ?? 0) + 1;
+  }
+  while (milliseconds >= minute) {
+    milliseconds -= minute;
+    duration.minutes = (duration.minutes ?? 0) + 1;
+  }
+  while (milliseconds >= second) {
+    milliseconds -= second;
+    duration.seconds = (duration.seconds ?? 0) + 1;
+  }
+  duration.milliseconds = 0;
+  return formatter.format(duration);
 }
 
 export function stopCurrent(guildId: string) {
