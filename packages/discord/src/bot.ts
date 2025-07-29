@@ -27,10 +27,7 @@ await new Promise((resolve) => unreadyClient.once(Events.ClientReady, resolve));
 export const client = unreadyClient as Client<true>;
 console.log(`Ready! Logged in as ${client.user.tag}`);
 
-const guildCollection = await client.guilds.fetch();
-const guildIds = guildCollection.map((guild) => guild.id);
-
-const startupTasks = [updateUserList(), updateCommandRegistrations(guildIds)];
+const startupTasks = [updateUserList(), updateCommandRegistrations()];
 await Promise.all(startupTasks);
 
 setInterval(async () => {
