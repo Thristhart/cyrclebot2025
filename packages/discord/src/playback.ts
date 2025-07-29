@@ -14,12 +14,14 @@ import {
   getVoiceConnection,
   joinVoiceChannel,
   NoSubscriberBehavior,
+  StreamType,
   VoiceConnection,
   VoiceConnectionStatus,
 } from "@discordjs/voice";
 import assert from "node:assert";
-import { createWriteStream } from "node:fs";
+import { createReadStream, createWriteStream } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
+import path from "node:path";
 import { Stream } from "node:stream";
 import { ReadableStream } from "node:stream/web";
 import { MediaObjectDBO } from "../../data/model";
@@ -80,6 +82,23 @@ async function getYtdlpStream(mediaObject: MediaObjectDBO) {
 }
 
 async function getAudioResourceFromMediaObject(mediaObject: MediaObjectDBO) {
+  if (mediaObject.url.startsWith(`file://`)) {
+    const filePath = mediaObject.url.slice("file://".length);
+    const resolved = path.resolve(filePath);
+    // only allow file paths to load from the bandle data dir
+    if (!resolved.startsWith(path.resolve(process.env.BANDLE_DATA_LOCATION!))) {
+      console.error(
+        "got bad filepath",
+        resolved,
+        "doesn't start with",
+        path.resolve(process.env.BANDLE_DATA_LOCATION!)
+      );
+      removeObjectFromQueue(mediaObject.id);
+      return undefined;
+    }
+    const fileStream = createReadStream(resolved, { emitClose: false });
+    return createAudioResource(fileStream, { inputType: StreamType.Arbitrary });
+  }
   const youtubeObjects = await getMediaObjectsFromYoutubeURL(mediaObject.url);
   if (youtubeObjects.length > 0) {
     const stream = await getYtdlpStream(mediaObject);
@@ -108,6 +127,10 @@ export async function checkPlaybackStatus() {
       const existingVoiceConnection = getVoiceConnection(guild.id);
       // nothing in the queue, but we're in a channel, so d/c
       if (existingVoiceConnection) {
+        console.log(
+          `[${guildInfo.id}]`,
+          "nothing in the queue and we're in a channel, so d/cing"
+        );
         existingVoiceConnection.disconnect();
       }
       continue;
@@ -119,6 +142,7 @@ export async function checkPlaybackStatus() {
     if (!currentMediaObject.channel_id) {
       continue;
     }
+    console.log(`[${guildInfo.id}]`, "currentMediaObject", currentMediaObject);
     const voiceConnection = joinVoiceChannel({
       channelId: currentMediaObject.channel_id,
       guildId: guild.id,
@@ -161,6 +185,7 @@ export async function checkPlaybackStatus() {
       voiceConnection.subscribe(player);
       mapVoiceConnectionToAudioPlayer.set(voiceConnection, player);
       player.on("stateChange", (oldState, newState) => {
+        console.log(`[${guildInfo.id}]`, "stateChange", newState.status);
         if (
           oldState.status === AudioPlayerStatus.Playing &&
           newState.status === AudioPlayerStatus.Idle
@@ -168,6 +193,7 @@ export async function checkPlaybackStatus() {
           const oldId = (oldState.resource as unknown as CustomResourceProps)
             .mediaObjectId;
           if (oldId !== undefined) {
+            console.log(`[${guildInfo.id}]`, "finished playing", oldId);
             removeObjectFromQueue(oldId);
             checkPlaybackStatus();
           }
@@ -190,6 +216,7 @@ export async function checkPlaybackStatus() {
       }, 300);
     }
     if (player.state.status === AudioPlayerStatus.Idle) {
+      console.log(`[${guildInfo.id}]`, "playing", currentMediaObject);
       // we're idle, but we have something to play, so play it
       const audioResource =
         await getAudioResourceFromMediaObject(currentMediaObject);
@@ -198,9 +225,11 @@ export async function checkPlaybackStatus() {
         customProps.mediaObjectId = currentMediaObject.id;
         // TODO: if I ever implement seeking, this should be currentMediaObject.playback_position_ms
         customProps.mediaStartTime = 0;
+        await entersState(voiceConnection, VoiceConnectionStatus.Ready, 30_000);
         player.play(audioResource);
       } else {
         console.error(
+          `[${guildInfo.id}]`,
           "Failed to create an audio resource from",
           currentMediaObject
         );

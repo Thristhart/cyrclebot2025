@@ -4,6 +4,7 @@ Description=Cyrclebot
 [Container]
 Image=ghcr.io/thristhart/cyrclebot:latest
 Mount=type=bind,source=/srv/containers/cyrclebot/data/,target=/mnt/data
+Mount=type=bind,source=/media/bandledata,target=/mnt/bandledata
 Mount=type=tmpfs,target=/tmp/
 EnvironmentFile=/srv/containers/cyrclebot/prod.env
 PublishPort=127.0.0.1:4001:3000

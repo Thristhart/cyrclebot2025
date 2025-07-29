@@ -38,3 +38,7 @@ setInterval(async () => {
 }, 5 * minute);
 
 checkPlaybackStatus();
+
+setInterval(async () => {
+  checkPlaybackStatus();
+}, minute);

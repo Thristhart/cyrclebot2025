@@ -9,6 +9,7 @@ import {
   SlashCommandOptionsOnlyBuilder,
 } from "discord.js";
 import { clearCommand } from "./clear";
+import { glorpCommand } from "./glorp";
 import { skipCommand } from "./skip";
 
 export interface Command {
@@ -26,6 +27,7 @@ export function setupCommands(client: Client) {
   registerCommand(playCommand);
   registerCommand(skipCommand);
   registerCommand(clearCommand);
+  registerCommand(glorpCommand);
 
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) {
@@ -38,6 +40,7 @@ export function setupCommands(client: Client) {
     }
     const command = commands.get(interaction.commandName);
     console.log(
+      interaction.guildId ? `[${interaction.guildId}]` : "[dm]",
       `[${interaction.user.username}] /${interaction.commandName} ${JSON.stringify(interaction.options.data)}`
     );
     if (!command) {
