@@ -1,5 +1,5 @@
 import { saveUserIfNotExist, setUserAvatar } from "@cyrclebot/data";
-import { playCommand } from "./play";
+import { executePlayCommand, playCommand } from "./play";
 
 import {
   ChatInputCommandInteraction,
@@ -28,6 +28,42 @@ export function setupCommands(client: Client) {
   registerCommand(skipCommand);
   registerCommand(clearCommand);
   registerCommand(glorpCommand);
+
+  client.on(Events.MessageCreate, async (message) => {
+    if (message.guildId) {
+      return;
+    }
+    if (message.author.id === client.user?.id) {
+      return;
+    }
+    console.log(
+      message.guildId ? `[${message.guildId}]` : "[dm]",
+      `[${message.author.username}] ${message.content}`
+    );
+    try {
+      const maybeUrl = message.content;
+      await executePlayCommand(
+        null,
+        client,
+        message.author,
+        maybeUrl,
+        null,
+        async (msg: string) => message.channel.send(msg)
+      );
+    } catch (error) {
+      console.error(error);
+      let errorMessage = "There was an error while executing this command!";
+      if (
+        error &&
+        typeof error === "object" &&
+        "message" in error &&
+        typeof error.message === "string"
+      ) {
+        errorMessage = error.message;
+      }
+      await message.channel.send(errorMessage);
+    }
+  });
 
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) {

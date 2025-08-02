@@ -3,12 +3,98 @@ import { getMediaObjectsFromYoutubeURL } from "@cyrclebot/youtube";
 import {
   ChannelType,
   ChatInputCommandInteraction,
+  Client,
   DiscordAPIError,
+  Guild,
   SlashCommandBuilder,
+  StageChannel,
+  User,
   VoiceBasedChannel,
+  VoiceChannel,
 } from "discord.js";
 import assert from "node:assert";
 import { checkPlaybackStatus } from "../playback";
+
+export async function executePlayCommand(
+  guild: Guild | null,
+  client: Client,
+  user: User,
+  url: string,
+  voiceChannel: StageChannel | VoiceChannel | null,
+  reply: (message: string) => Promise<unknown>
+) {
+  if (voiceChannel) {
+    assert(
+      ((c: typeof voiceChannel): c is VoiceBasedChannel =>
+        c.type === ChannelType.GuildVoice ||
+        c.type === ChannelType.GuildStageVoice)(voiceChannel),
+      "Must specify valid voice channel"
+    );
+  } else if (guild) {
+    try {
+      const voiceState = await guild.voiceStates.fetch(user);
+      voiceChannel = voiceState.channel;
+    } catch (e) {
+      if (e instanceof DiscordAPIError) {
+        // ignore
+      } else {
+        throw e;
+      }
+    }
+  } else if (!guild) {
+    const guilds = await client.guilds.fetch();
+
+    const guildObjects = await Promise.allSettled(
+      guilds.map(async (guild) => {
+        return guild.fetch();
+      })
+    );
+    await Promise.allSettled(
+      guildObjects.map(async (result) => {
+        if (result.status !== "fulfilled") {
+          return;
+        }
+        try {
+          const voiceState = await result.value.voiceStates.fetch(user);
+          voiceChannel = voiceState.channel;
+        } catch (e) {
+          if (e instanceof DiscordAPIError) {
+            // ignore
+          } else {
+            throw e;
+          }
+        }
+      })
+    );
+  }
+
+  assert(
+    voiceChannel,
+    "Must either specify a voice channel or be in a voice channel"
+  );
+  const youtubeMediaObjects = await getMediaObjectsFromYoutubeURL(url);
+  console.log(youtubeMediaObjects);
+
+  let queuedAnything = false;
+
+  if (youtubeMediaObjects.length > 0) {
+    for (const object of youtubeMediaObjects) {
+      queuedAnything = true;
+      addToEndOfQueue({
+        ...object,
+        server_id: voiceChannel.guildId,
+        channel_id: voiceChannel.id,
+      });
+    }
+    await reply(`Added ${youtubeMediaObjects.length} to the queue`);
+  }
+
+  if (!queuedAnything) {
+    await reply("Couldn't find any media to queue");
+    return;
+  }
+  checkPlaybackStatus();
+}
 
 export const playCommand = {
   slashCommand: new SlashCommandBuilder()
@@ -30,84 +116,19 @@ export const playCommand = {
   async execute(interaction: ChatInputCommandInteraction) {
     const url = interaction.options.getString("url");
     assert(url, "Must specify URL");
-    let channel = interaction.options.getChannel("channel");
-
-    if (channel) {
-      assert(
-        ((c: typeof channel): c is VoiceBasedChannel =>
-          c.type === ChannelType.GuildVoice ||
-          c.type === ChannelType.GuildStageVoice)(channel),
-        "Must specify valid voice channel"
-      );
-    } else if (interaction.guild) {
-      try {
-        const voiceState = await interaction.guild.voiceStates.fetch(
-          interaction.user
-        );
-        channel = voiceState.channel;
-      } catch (e) {
-        if (e instanceof DiscordAPIError) {
-          // ignore
-        } else {
-          throw e;
-        }
-      }
-    } else if (!interaction.guild) {
-      const guilds = await interaction.client.guilds.fetch();
-
-      const guildObjects = await Promise.allSettled(
-        guilds.map(async (guild) => {
-          return guild.fetch();
-        })
-      );
-      await Promise.allSettled(
-        guildObjects.map(async (result) => {
-          if (result.status !== "fulfilled") {
-            return;
-          }
-          try {
-            const voiceState = await result.value.voiceStates.fetch(
-              interaction.user
-            );
-            channel = voiceState.channel;
-          } catch (e) {
-            if (e instanceof DiscordAPIError) {
-              // ignore
-            } else {
-              throw e;
-            }
-          }
-        })
-      );
-    }
-
-    assert(
-      channel,
-      "Must either specify a voice channel or be in a voice channel"
+    const voiceChannelOption = interaction.options.getChannel(
+      "channel",
+      false,
+      [ChannelType.GuildVoice, ChannelType.GuildStageVoice]
     );
-    const youtubeMediaObjects = await getMediaObjectsFromYoutubeURL(url);
-    console.log(youtubeMediaObjects);
 
-    let queuedAnything = false;
-
-    if (youtubeMediaObjects.length > 0) {
-      for (const object of youtubeMediaObjects) {
-        queuedAnything = true;
-        addToEndOfQueue({
-          ...object,
-          server_id: channel.guildId,
-          channel_id: channel.id,
-        });
-      }
-      await interaction.reply(
-        `Added ${youtubeMediaObjects.length} to the queue`
-      );
-    }
-
-    if (!queuedAnything) {
-      await interaction.reply("Couldn't find any media to queue");
-      return;
-    }
-    checkPlaybackStatus();
+    await executePlayCommand(
+      interaction.guild,
+      interaction.client,
+      interaction.user,
+      url,
+      voiceChannelOption,
+      async (msg: string) => interaction.reply(msg)
+    );
   },
 } as const;

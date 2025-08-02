@@ -57,7 +57,6 @@ export const glorpCommand = {
         .addChannelTypes(ChannelType.GuildStageVoice)
     ),
   async execute(interaction: ChatInputCommandInteraction) {
-    assert(interaction.guild, "Must use in a discord server");
     let channel = interaction.options.getChannel("channel");
 
     if (channel) {
