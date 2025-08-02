@@ -84,6 +84,33 @@ export const glorpCommand = {
           throw e;
         }
       }
+    } else if (!interaction.guild) {
+      const guilds = await interaction.client.guilds.fetch();
+
+      const guildObjects = await Promise.allSettled(
+        guilds.map(async (guild) => {
+          return guild.fetch();
+        })
+      );
+      await Promise.allSettled(
+        guildObjects.map(async (result) => {
+          if (result.status !== "fulfilled") {
+            return;
+          }
+          try {
+            const voiceState = await result.value.voiceStates.fetch(
+              interaction.user
+            );
+            channel = voiceState.channel;
+          } catch (e) {
+            if (e instanceof DiscordAPIError) {
+              // ignore
+            } else {
+              throw e;
+            }
+          }
+        })
+      );
     }
 
     assert(
@@ -94,7 +121,7 @@ export const glorpCommand = {
     const key = songKeys[Math.floor(Math.random() * songKeys.length)];
     const song = allSongs.get(key)!;
     addToEndOfQueue({
-      server_id: interaction.guildId,
+      server_id: channel.guildId,
       channel_id: channel.id,
       url: `file://${process.env.BANDLE_DATA_LOCATION}${song.folder}/5.mp3`,
       title: "bandle",

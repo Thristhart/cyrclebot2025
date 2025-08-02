@@ -39,14 +39,10 @@ export const playCommand = {
           c.type === ChannelType.GuildStageVoice)(channel),
         "Must specify valid voice channel"
       );
-    } else if (
-      interaction.guild &&
-      interaction.member &&
-      "_roles" in interaction.member
-    ) {
+    } else if (interaction.guild) {
       try {
         const voiceState = await interaction.guild.voiceStates.fetch(
-          interaction.member
+          interaction.user
         );
         channel = voiceState.channel;
       } catch (e) {
@@ -56,6 +52,33 @@ export const playCommand = {
           throw e;
         }
       }
+    } else if (!interaction.guild) {
+      const guilds = await interaction.client.guilds.fetch();
+
+      const guildObjects = await Promise.allSettled(
+        guilds.map(async (guild) => {
+          return guild.fetch();
+        })
+      );
+      await Promise.allSettled(
+        guildObjects.map(async (result) => {
+          if (result.status !== "fulfilled") {
+            return;
+          }
+          try {
+            const voiceState = await result.value.voiceStates.fetch(
+              interaction.user
+            );
+            channel = voiceState.channel;
+          } catch (e) {
+            if (e instanceof DiscordAPIError) {
+              // ignore
+            } else {
+              throw e;
+            }
+          }
+        })
+      );
     }
 
     assert(
@@ -72,7 +95,7 @@ export const playCommand = {
         queuedAnything = true;
         addToEndOfQueue({
           ...object,
-          server_id: interaction.guildId,
+          server_id: channel.guildId,
           channel_id: channel.id,
         });
       }
